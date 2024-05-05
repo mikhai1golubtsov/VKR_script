@@ -6,17 +6,19 @@
   library(lmtest)}
 
 
-####Индекс IMOEX 2019-2024####
-IMOEX <- read_excel("Датасеты/Архив-Индекс IMOEX 19-24.xlsx")
+####Индекс IMOEX 2020-2022####
+IMOEX <- read_excel("Датасеты/Архив-Индекс IMOEX 20-22.xlsx")
 View(IMOEX)
 #Для работы с временными рядами используется функция ts ("time series" - времен-
 #ной ряд). 
 #В рассматриваемом датасете мы рассматриваем дневные данные, в календарном месяце 
 #примерно 20 торговых дней, в году 250.
-IMOEX$price <- ts(IMOEX$Close, start = c(2019, 1), frequency = 250)
-#рассчитываем непрерывная доходность как разность логарифмов
-returns<-log(IMOEX$price)
-returns <- diff(returns, lag = 1)
+IMOEX$price <- ts(IMOEX$Close, start = c(2020, 1), frequency = 250)
+price<-IMOEX$Close
+###дискретная доходность
+lagprice<-lag(price,1)
+diffprice<-diff(ts(price), lag = 1)
+returns<-diffprice/lagprice[2:718]
 returns
 plot(returns)
 #автоподбор ARIMA модели на основе информационных критерив
@@ -36,7 +38,7 @@ summary(mod.arch)
 #проведем тест множителей Лагранжа для определения ARCH-эффектов
 byd.archTest <- ArchTest(returns, lags = 1, demean = TRUE)
 byd.archTest
-#p-value = 1.661e-12, следовательно ARCH-эффект ЕСТЬ
+#p-value = 0.003243, следовательно ARCH-эффект ЕСТЬ
 
 #Оцениваем модель GARCH(1,1)
 arch.fit <- garchFit(~arma(1,0)+garch(1,1), data = returns, trace = F)
@@ -52,26 +54,28 @@ print(rolling_mean)
 #Влияние шумовых инвесторов оценивается как разница между эпсилонами ежедневными
 #и их среднемесячными значениеми
 #Расчет значения дельты (влияние иррациональных трейдеров)
-eps1<-eps[20:1319]
+eps1<-eps[20:717]
 delta<-eps1-rolling_mean
 plot(delta)
 t.test(delta)
-delta1 <- ts(delta, start = c(2019, 21), frequency = 250)
+delta1 <- ts(delta, start = c(2020, 21), frequency = 250)
 plot(delta1)
 t.test(delta1)
 print(mean(delta))
 
-
-####Индекс MCXSM 2020-2022####
-
-MCXSM <- read_excel("Датасеты/Архив-Индекс MCXSM 20-22.xlsx")
+####Индекс MCXSM 2019-2024####
+MCXSM <- read_excel("Датасеты/Архив-Индекс MCXSM 19.xlsx")
 View(MCXSM)
-MCXSM$price <- ts(MCXSM$Close, start = c(2020, 1), frequency = 250)
-#рассчитываем непрерывную доходность как разность логарифмов
-returns<-log(MCXSM$price)
-returns <- diff(returns, lag = 1)
+MCXSM$price <- ts(MCXSM$Close, start = c(2019, 1), frequency = 250)
+price<-MCXSM$Close
+price
+###дискретная доходность
+lagprice<-lag(price,1)
+diffprice<-diff(ts(price), lag = 1)
+returns<-diffprice/lagprice[2:1314]
 returns
 plot(returns)
+
 #автоподбор ARIMA модели
 mod.mean <- auto.arima(returns)
 summary(mod.mean)
@@ -90,7 +94,7 @@ summary(mod.arch)
 #проведем тест множителей Лагранжа для определения ARCH-эффектов
 byd.archTest <- ArchTest(returns, lags = 1, demean = TRUE)
 byd.archTest
-#p-value = 0.0001779, следовательно ARCH-эффект ЕСТЬ
+#p-value = 0.001052, следовательно ARCH-эффект ЕСТЬ
 
 #Мы можем оценить модель GARCH(1,1), используя функцию garchFit
 arch.fit <- garchFit(~arma(1,0)+garch(1,1), data = returns, trace = F)
@@ -104,11 +108,11 @@ rolling_mean <-na.omit(rolling_mean)
 #Влияние шумовых инвесторов оценивается как разница между эпсилонами ежедневными
 #и их среднемесячными значениеми
 #выведем значение дельты (влияние иррациональных инвесторов)
-eps1<-eps[20:713]
+eps1<-eps[20:1313]
 delta<-eps1-rolling_mean
 plot(delta)
 t.test(delta)
-delta1 <- ts(delta, start = c(2020, 21), frequency = 250)
+delta1 <- ts(delta, start = c(2019, 21), frequency = 250)
 plot(delta1)
 t.test(delta1)
 print(mean(delta))
